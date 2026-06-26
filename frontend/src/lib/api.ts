@@ -152,6 +152,26 @@ export interface SnapshotResult {
   competitors: number;
 }
 
+export interface EconomicsParams {
+  commission_pct: number;
+  logistics_cost: number;
+  storage_cost: number;
+  acquiring_pct: number;
+  returns_pct: number;
+  tax_pct: number;
+}
+
+export interface EconomicsResult {
+  price: number;
+  cost_price: number;
+  params: EconomicsParams;
+  breakdown: Record<string, number>;
+  total_costs: number;
+  net_profit: number;
+  margin_pct?: number | null;
+  is_profitable: boolean;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -315,5 +335,20 @@ export function getPriceHistory(productId: number): Promise<PriceHistory> {
 export function takePriceSnapshot(productId: number): Promise<SnapshotResult> {
   return request<SnapshotResult>(`/products/${productId}/price-snapshot`, {
     method: "POST",
+  });
+}
+
+// ── Юнит-экономика ──────────────────────────────────────────
+export function getUnitEconomics(productId: number): Promise<EconomicsResult> {
+  return request<EconomicsResult>(`/products/${productId}/unit-economics`);
+}
+
+export function saveUnitEconomics(
+  productId: number,
+  params: EconomicsParams
+): Promise<EconomicsResult> {
+  return request<EconomicsResult>(`/products/${productId}/unit-economics`, {
+    method: "PUT",
+    body: JSON.stringify(params),
   });
 }

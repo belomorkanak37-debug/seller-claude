@@ -1,4 +1,5 @@
 import {
+  Calculator,
   ExternalLink,
   LineChart,
   Pencil,
@@ -36,12 +37,14 @@ export function ProductDetail({
   onDeleted,
   onCompetitors,
   onPriceHistory,
+  onEconomics,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
   onDeleted: () => void;
   onCompetitors: (product: Product) => void;
   onPriceHistory: (product: Product) => void;
+  onEconomics: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -198,6 +201,10 @@ export function ProductDetail({
           <LineChart className="h-4 w-4" /> История цен
         </Button>
       </div>
+
+      <Button variant="secondary" onClick={() => onEconomics(product)}>
+        <Calculator className="h-4 w-4" /> Юнит-экономика
+      </Button>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

@@ -7,6 +7,7 @@ from app.api.routes import (
     health,
     price_history,
     products,
+    unit_economics,
     users,
 )
 from app.config import settings
@@ -29,6 +30,7 @@ app.include_router(products.router)
 app.include_router(competitors.router)
 app.include_router(users.router)
 app.include_router(price_history.router)
+app.include_router(unit_economics.router)
 
 
 @app.get("/")
