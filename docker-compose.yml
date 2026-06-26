@@ -44,6 +44,28 @@ services:
     volumes:
       - ./backend:/app
 
+  worker:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+
+  beat:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+
   bot:
     build: ./bot
     env_file: .env

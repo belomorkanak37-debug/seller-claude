@@ -4,7 +4,7 @@ Telegram Mini App + бот — помощник продавца на **Ozon, Wi
 Продавец добавляет товар по артикулу, получает карточку, конкурентов, цены,
 рейтинги, отзывы, историю цен и аналитику. Все данные — реальные.
 
-> Статус: **Этап 1 — свой товар на реальных данных** (готово). Этап 0 — готов.
+> Статус: **Этап 2 — парсинг-фундамент** (готово). Этапы 0–1 — готовы.
 
 ## Стек
 
@@ -175,9 +175,65 @@ pip install -r requirements-dev.txt
 pytest -q          # 13 тестов: парсинг WB + поток lookup/create/list/edit/delete
 ```
 
+## Этап 2 — парсинг-фундамент
+
+Слой устойчивого парсинга и провайдеры для всех трёх площадок за единым
+интерфейсом `MarketplaceProvider`.
+
+### Слой устойчивости (`backend/app/scraping/`)
+- **`proxy.py`** — `ProxyPool`: режим ротирующего шлюза (`PROXY_URL`, рекомендуемый)
+  или список прокси (`PROXY_LIST`) с round-robin и cooldown при бане.
+- **`throttle.py`** — троттлинг по хосту: минимальный интервал + случайная пауза.
+- **`captcha.py`** — абстракция `CaptchaSolver` + адаптер **2captcha/rucaptcha**
+  (переключается `CAPTCHA_BASE_URL`). Без ключа — `NoCaptchaSolver` с понятной ошибкой.
+- **`browser.py`** — headless-Chromium (Playwright) со stealth-настройками
+  (UA, locale ru-RU, timezone, маскировка `webdriver`), прокси, перехват JSON-ответов,
+  детект капчи/блокировки.
+- **`cache.py`** — кеш результатов парсинга в Redis с TTL (`PROVIDER_CACHE_TTL`),
+  прозрачно отключается при недоступности Redis.
+- **`parsers.py`** — чистые функции: `ld+json` (schema.org/Product) и
+  Ozon `composer-api` widgetStates. Устойчивы к смене вёрстки, покрыты тестами.
+
+### Провайдеры
+- **Wildberries** — httpx + публичные JSON (как на Этапе 1), теперь с
+  троттлингом, прокси и Redis-кешем.
+- **Ozon** — Playwright: рендер карточки, парсинг из перехваченного `composer-api`
+  JSON (fallback — `ld+json`).
+- **Яндекс Маркет** — Playwright: парсинг из `ld+json` (устойчиво к SmartCaptcha-вёрстке).
+
+### Очереди (`backend/app/workers/`) — Celery + Redis
+- `celery_app.py` — Celery на Redis, beat-расписание.
+- `tasks.py` — `refresh_product(id)` (обновить карточку), `snapshot_all_prices()`
+  (ежедневный снимок цен, beat 03:00 — основа Этапа 5).
+- Сервисы `worker` и `beat` в docker-compose.
+
+### Конфигурация (.env)
+`PROXY_URL` / `PROXY_LIST`, `CAPTCHA_PROVIDER` / `CAPTCHA_API_KEY` / `CAPTCHA_BASE_URL`,
+`PROVIDER_CACHE_TTL`, `THROTTLE_MIN_INTERVAL` / `THROTTLE_JITTER`,
+`PLAYWRIGHT_HEADLESS` / `PLAYWRIGHT_NAV_TIMEOUT_MS`. См. `.env.example`.
+
+### Что проверить
+1. `docker compose up` поднимает дополнительно `worker` и `beat` (Celery).
+2. WB-товар добавляется как раньше; повторный lookup того же артикула берётся
+   из Redis-кеша (нет повторного запроса к WB в пределах TTL).
+3. Без прокси Ozon/Я.Маркет с дата-центрового IP вернут капчу/блок — приходит
+   понятная ошибка (нужны резидентные прокси + ключ капчи).
+4. `celery -A app.workers.celery_app worker` стартует, задачи зарегистрированы.
+
+### Тесты
+```bash
+cd backend && pip install -r requirements-dev.txt && pytest -q   # 28 passed
+```
+Покрыто: ротация/cooldown прокси, троттлинг, кеш (fake-redis), выбор решателя
+капчи, парсинг `ld+json` и Ozon `composer-api`, плюс поток Этапа 1.
+
+> Playwright-навигация Ozon/Я.Маркет требует реального браузера, прокси и (часто)
+> решателя капчи — её парсеры вынесены в чистые функции и протестированы на
+> сэмплах ответов. Прогон против живых Ozon/Я.Маркет выполняется в среде заказчика
+> с резидентными прокси.
+
 ## Дальше по плану
 
-Этап 2 — парсинг-фундамент: реализации провайдеров Ozon и Я.Маркет
-(Playwright + ротация прокси + анти-бот), очереди Celery, кеш, тесты на реальных
-товарах.
+Этап 3 — конкуренты: выделение ключевых слов из названия, поиск конкурентов,
+их реальные карточки/цены/рейтинги/отзывы/теги, поле «Заметка».
 ```

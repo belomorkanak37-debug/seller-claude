@@ -21,6 +21,7 @@ from app.providers.base import (
     SourceUnavailable,
 )
 from app.providers.http import FetchError, fetch_json
+from app.scraping.cache import cache_get, cache_set
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,11 @@ class WildberriesProvider(MarketplaceProvider):
                 f"Артикул WB должен быть числом, получено: {article!r}"
             ) from exc
 
+        cache_key = f"wb:card:{nm}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         try:
             data = await fetch_json(
                 _CARD_DETAIL_URL,
@@ -146,6 +152,7 @@ class WildberriesProvider(MarketplaceProvider):
         products = (data or {}).get("data", {}).get("products", [])
         if not products:
             raise ProductNotFound(f"Товар WB {article} не найден")
+        await cache_set(cache_key, products[0])
         return products[0]
 
     async def get_product(self, article: str) -> ProductDTO:
@@ -171,6 +178,10 @@ class WildberriesProvider(MarketplaceProvider):
 
     async def _fetch_tags(self, nm: int) -> list[str]:
         """Характеристики товара из basket card.json (реальные теги)."""
+        cache_key = f"wb:tags:{nm}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
         try:
             data = await fetch_json(_card_json_url(nm), retries=2)
         except FetchError:
@@ -193,7 +204,9 @@ class WildberriesProvider(MarketplaceProvider):
                     pair = f"{name}: {value}"
                     if pair not in tags:
                         tags.append(pair)
-        return tags[:40]
+        tags = tags[:40]
+        await cache_set(cache_key, tags)
+        return tags
 
     async def get_reviews(self, product_id: str, limit: int = 50) -> list[ReviewDTO]:
         """Отзывы по imtId (root). Пробуем оба feedback-хоста."""

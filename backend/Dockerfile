@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Playwright + Chromium и системные зависимости (для Ozon/Я.Маркет)
+RUN playwright install --with-deps chromium
+
 COPY . .
 
 EXPOSE 8000

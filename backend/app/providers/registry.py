@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from app.providers.base import Marketplace, MarketplaceProvider, ProviderError
-from app.providers.stubs import OzonProvider, YandexMarketProvider
+from app.providers.ozon import OzonProvider
 from app.providers.wildberries import WildberriesProvider
+from app.providers.yandex import YandexMarketProvider
 
 _REGISTRY: dict[Marketplace, type[MarketplaceProvider]] = {
     Marketplace.WILDBERRIES: WildberriesProvider,

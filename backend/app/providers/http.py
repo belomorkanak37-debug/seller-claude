@@ -14,6 +14,9 @@ import random
 
 import httpx
 
+from app.scraping.proxy import proxy_pool
+from app.scraping.throttle import throttle
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_HEADERS = {
@@ -46,12 +49,19 @@ async def fetch_json(
     """
     merged_headers = {**DEFAULT_HEADERS, **(headers or {})}
     last_exc: Exception | None = None
+    proxy = proxy_pool.get_proxy()
 
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+    async with httpx.AsyncClient(
+        timeout=timeout, follow_redirects=True, proxy=proxy
+    ) as client:
         for attempt in range(1, retries + 1):
             try:
+                # троттлинг по хосту: интервал + джиттер против банов
+                await throttle(url)
                 resp = await client.get(url, params=params, headers=merged_headers)
                 if resp.status_code not in expected_status:
+                    if resp.status_code in (403, 429):
+                        proxy_pool.mark_bad(proxy)
                     raise FetchError(
                         f"{url} вернул статус {resp.status_code}"
                     )
