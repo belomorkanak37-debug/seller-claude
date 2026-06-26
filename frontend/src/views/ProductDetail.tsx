@@ -1,4 +1,4 @@
-import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -26,10 +26,12 @@ export function ProductDetail({
   productId,
   onEdit,
   onDeleted,
+  onCompetitors,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
   onDeleted: () => void;
+  onCompetitors: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -157,6 +159,10 @@ export function ProductDetail({
       </Card>
 
       {error && <ErrorBanner message={error} />}
+
+      <Button onClick={() => onCompetitors(product)}>
+        <Users className="h-4 w-4" /> Конкуренты
+      </Button>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

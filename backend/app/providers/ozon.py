@@ -18,11 +18,24 @@ from app.providers.base import (
     ReviewDTO,
     SourceUnavailable,
 )
+import re
+
 from app.scraping.browser import render
 from app.scraping.cache import cache_get, cache_set
-from app.scraping.parsers import parse_ldjson_product, parse_ozon_composer
+from app.scraping.parsers import (
+    parse_ldjson_itemlist,
+    parse_ldjson_product,
+    parse_ozon_composer,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _article_from_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    matches = re.findall(r"(\d{5,})", url)
+    return matches[-1] if matches else None
 
 
 class OzonProvider(MarketplaceProvider):
@@ -81,10 +94,33 @@ class OzonProvider(MarketplaceProvider):
     async def search_competitors(
         self, keywords: list[str], limit: int = 10
     ) -> list[CompetitorDTO]:
-        # Поиск конкурентов Ozon подключается на Этапе 3.
-        raise SourceUnavailable(
-            "Поиск конкурентов Ozon будет подключён на Этапе 3"
-        )
+        query = " ".join(keywords).strip()
+        if not query:
+            return []
+        url = f"https://www.ozon.ru/search/?text={query.replace(' ', '+')}"
+        result = await render(url)
+        items = parse_ldjson_itemlist(result.html)
+        competitors: list[CompetitorDTO] = []
+        for it in items[:limit]:
+            if not it.get("name"):
+                continue
+            competitors.append(
+                CompetitorDTO(
+                    marketplace=self.marketplace,
+                    article=_article_from_url(it.get("url")),
+                    name=it["name"],
+                    price=it.get("price"),
+                    photo_url=it.get("photo_url"),
+                    rating=it.get("rating"),
+                    reviews_count=it.get("reviews_count"),
+                    url=it.get("url"),
+                )
+            )
+        if not competitors:
+            raise SourceUnavailable(
+                "Не удалось получить результаты поиска Ozon (нужны прокси/решатель капчи)"
+            )
+        return competitors
 
     async def get_price(self, product_id: str) -> float | None:
         return (await self.get_product(product_id)).price

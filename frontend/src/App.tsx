@@ -7,6 +7,7 @@ import { authTelegram, type Product, type ProductPreview } from "@/lib/api";
 import type { MarketplaceId } from "@/lib/api";
 import { getWebApp, haptic, isInTelegram } from "@/lib/telegram";
 import { AddProduct } from "@/views/AddProduct";
+import { Competitors } from "@/views/Competitors";
 import { ConfirmProduct } from "@/views/ConfirmProduct";
 import { EditProduct } from "@/views/EditProduct";
 import { ProductDetail } from "@/views/ProductDetail";
@@ -23,7 +24,8 @@ type View =
       preview: ProductPreview;
     }
   | { name: "detail"; productId: number }
-  | { name: "edit"; product: Product };
+  | { name: "edit"; product: Product }
+  | { name: "competitors"; productId: number; productName: string };
 
 type AuthState =
   | { status: "loading" }
@@ -152,10 +154,24 @@ export default function App() {
         <ProductDetail
           productId={current.productId}
           onEdit={(product) => push({ name: "edit", product })}
+          onCompetitors={(product) =>
+            push({
+              name: "competitors",
+              productId: product.id,
+              productName: product.name,
+            })
+          }
           onDeleted={() => {
             setReloadKey((k) => k + 1);
             resetTo({ name: "list" });
           }}
+        />
+      )}
+
+      {current.name === "competitors" && (
+        <Competitors
+          productId={current.productId}
+          productName={current.productName}
         />
       )}
 

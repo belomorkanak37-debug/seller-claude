@@ -78,6 +78,39 @@ export interface ProductUpdate {
   notes?: string | null;
 }
 
+export interface CompetitorPreview {
+  marketplace: string;
+  article?: string | null;
+  name: string;
+  price?: number | null;
+  photo_url?: string | null;
+  rating?: number | null;
+  reviews_count?: number | null;
+  url?: string | null;
+}
+
+export interface CompetitorSearchResponse {
+  keywords: string[];
+  competitors: CompetitorPreview[];
+}
+
+export interface Competitor {
+  id: number;
+  product_id: number;
+  marketplace: string;
+  article?: string | null;
+  url?: string | null;
+  name: string;
+  photo_url?: string | null;
+  price?: number | null;
+  rating?: number | null;
+  reviews_count?: number | null;
+  tags?: string[] | null;
+  note?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -166,4 +199,45 @@ export function updateProduct(
 
 export function deleteProduct(id: number): Promise<void> {
   return request<void>(`/products/${id}`, { method: "DELETE" });
+}
+
+// ── Конкуренты ──────────────────────────────────────────────
+export function searchCompetitors(
+  productId: number
+): Promise<CompetitorSearchResponse> {
+  return request<CompetitorSearchResponse>(
+    `/products/${productId}/competitors/search`
+  );
+}
+
+export function listCompetitors(productId: number): Promise<Competitor[]> {
+  return request<Competitor[]>(`/products/${productId}/competitors`);
+}
+
+export function addCompetitor(
+  productId: number,
+  payload: CompetitorPreview & { note?: string | null }
+): Promise<Competitor> {
+  return request<Competitor>(`/products/${productId}/competitors`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getCompetitorReviews(competitorId: number): Promise<Review[]> {
+  return request<Review[]>(`/competitors/${competitorId}/reviews`);
+}
+
+export function updateCompetitor(
+  competitorId: number,
+  patch: { note?: string | null }
+): Promise<Competitor> {
+  return request<Competitor>(`/competitors/${competitorId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deleteCompetitor(competitorId: number): Promise<void> {
+  return request<void>(`/competitors/${competitorId}`, { method: "DELETE" });
 }

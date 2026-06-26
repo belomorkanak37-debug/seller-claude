@@ -7,13 +7,19 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+import app.services.competitors as comp_svc
 import app.services.products as svc
 from app.api.deps import get_current_user
 from app.db.base import Base
 from app.db.models import User
 from app.db.session import get_session
 from app.main import app
-from app.providers.base import Marketplace, ProductDTO, ReviewDTO
+from app.providers.base import (
+    CompetitorDTO,
+    Marketplace,
+    ProductDTO,
+    ReviewDTO,
+)
 
 
 class FakeWildberriesProvider:
@@ -48,6 +54,27 @@ class FakeWildberriesProvider:
             )
         ]
 
+    async def search_competitors(self, keywords, limit: int = 10):
+        # один из результатов совпадает с собственным товаром (article=123)
+        return [
+            CompetitorDTO(
+                marketplace=Marketplace.WILDBERRIES,
+                article="555",
+                name="Комод дубовый конкурент",
+                price=4100.0,
+                photo_url="https://img/c.webp",
+                rating=4.5,
+                reviews_count=88,
+                url="https://www.wildberries.ru/catalog/555/detail.aspx",
+            ),
+            CompetitorDTO(
+                marketplace=Marketplace.WILDBERRIES,
+                article="123",
+                name="Это мой товар",
+                price=3499.0,
+            ),
+        ]
+
 
 @pytest.fixture()
 def client(monkeypatch):
@@ -75,7 +102,9 @@ def client(monkeypatch):
 
     app.dependency_overrides[get_session] = override_session
     app.dependency_overrides[get_current_user] = override_user
-    monkeypatch.setattr(svc, "get_provider", lambda mp: FakeWildberriesProvider())
+    fake = lambda mp: FakeWildberriesProvider()  # noqa: E731
+    monkeypatch.setattr(svc, "get_provider", fake)
+    monkeypatch.setattr(comp_svc, "get_provider", fake)
 
     with TestClient(app) as c:
         yield c

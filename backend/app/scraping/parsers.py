@@ -95,6 +95,55 @@ def parse_ldjson_product(html: str) -> dict:
     return {}
 
 
+def parse_ldjson_itemlist(html: str) -> list[dict]:
+    """Список товаров со страницы поиска из ld+json ItemList.
+
+    Каждый элемент itemListElement может быть Product или ListItem,
+    оборачивающим Product. Возвращает список dict с полями карточки.
+    """
+    results: list[dict] = []
+    for obj in _iter_ldjson_objects(html):
+        types = obj.get("@type")
+        types = types if isinstance(types, list) else [types]
+        if "ItemList" not in types:
+            continue
+        for el in obj.get("itemListElement", []) or []:
+            item = el.get("item") if isinstance(el, dict) else None
+            product = item if isinstance(item, dict) else el
+            if not isinstance(product, dict):
+                continue
+            ptypes = product.get("@type")
+            ptypes = ptypes if isinstance(ptypes, list) else [ptypes]
+            if "Product" not in ptypes and "name" not in product:
+                # ListItem с url, но без вложенного Product — пропускаем
+                if not product.get("url"):
+                    continue
+            image = product.get("image")
+            if isinstance(image, list):
+                image = image[0] if image else None
+            offers = product.get("offers") or {}
+            if isinstance(offers, list):
+                offers = offers[0] if offers else {}
+            agg = product.get("aggregateRating") or {}
+            results.append(
+                {
+                    "name": product.get("name"),
+                    "url": product.get("url"),
+                    "photo_url": image,
+                    "price": _to_float(offers.get("price"))
+                    if isinstance(offers, dict)
+                    else None,
+                    "rating": _to_float(agg.get("ratingValue"))
+                    if isinstance(agg, dict)
+                    else None,
+                    "reviews_count": _to_int(agg.get("reviewCount"))
+                    if isinstance(agg, dict)
+                    else None,
+                }
+            )
+    return results
+
+
 def _ozon_widget_states(composer_json: dict) -> dict[str, dict]:
     """Раскрывает widgetStates: значения приходят JSON-строками."""
     states = composer_json.get("widgetStates") or {}
