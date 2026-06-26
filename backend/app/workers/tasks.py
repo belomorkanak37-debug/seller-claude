@@ -7,11 +7,11 @@ import logging
 
 from sqlalchemy import select
 
-from app.db.models import PriceSnapshot, Product, User
+from app.db.models import Product, User
 from app.db.session import async_session_maker
 from app.providers.base import ProviderError
-from app.providers.registry import get_provider
 from app.services import notifications as notify_svc
+from app.services import price_history as price_svc
 from app.services import products as products_svc
 from app.workers.celery_app import celery_app
 
@@ -91,23 +91,10 @@ async def _check_new_reviews() -> dict:
 
 @celery_app.task(name="app.workers.tasks.snapshot_all_prices")
 def snapshot_all_prices() -> dict:
-    """Снимок цен по всем товарам (для истории цен, Этап 5)."""
+    """Ежедневный снимок цен по всем товарам и их конкурентам (история цен)."""
     return _run(_snapshot_all_prices())
 
 
 async def _snapshot_all_prices() -> dict:
-    saved = 0
     async with async_session_maker() as session:
-        products = (await session.execute(select(Product))).scalars().all()
-        for product in products:
-            try:
-                provider = get_provider(product.marketplace)
-                price = await provider.get_price(product.article)
-            except ProviderError as exc:
-                logger.warning("snapshot %s: %s", product.id, exc)
-                continue
-            if price is not None:
-                session.add(PriceSnapshot(product_id=product.id, price=price))
-                saved += 1
-        await session.commit()
-    return {"status": "ok", "snapshots": saved}
+        return await price_svc.snapshot_all(session)

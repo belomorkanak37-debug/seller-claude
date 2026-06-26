@@ -1,4 +1,11 @@
-import { ExternalLink, Pencil, RefreshCw, Trash2, Users } from "lucide-react";
+import {
+  ExternalLink,
+  LineChart,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -28,11 +35,13 @@ export function ProductDetail({
   onEdit,
   onDeleted,
   onCompetitors,
+  onPriceHistory,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
   onDeleted: () => void;
   onCompetitors: (product: Product) => void;
+  onPriceHistory: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -181,9 +190,14 @@ export function ProductDetail({
 
       {error && <ErrorBanner message={error} />}
 
-      <Button onClick={() => onCompetitors(product)}>
-        <Users className="h-4 w-4" /> Конкуренты
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button onClick={() => onCompetitors(product)}>
+          <Users className="h-4 w-4" /> Конкуренты
+        </Button>
+        <Button onClick={() => onPriceHistory(product)}>
+          <LineChart className="h-4 w-4" /> История цен
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

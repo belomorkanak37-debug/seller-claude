@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import app.services.competitors as comp_svc
+import app.services.price_history as price_svc
 import app.services.products as svc
 from app.api.deps import get_current_user
 from app.db.base import Base
@@ -60,6 +61,12 @@ class FakeWildberriesProvider:
         base = [_review("r1", "Анна", "отличный комод", 5)]
         return base + list(FakeWildberriesProvider.EXTRA_REVIEWS)
 
+    # Текущая цена (для снапшотов истории цен)
+    PRICE: float = 3499.0
+
+    async def get_price(self, product_id: str):
+        return FakeWildberriesProvider.PRICE
+
     async def search_competitors(self, keywords, limit: int = 10):
         return [
             CompetitorDTO(
@@ -99,8 +106,10 @@ def _make_env():
 @pytest.fixture(autouse=True)
 def _reset_fake():
     FakeWildberriesProvider.EXTRA_REVIEWS = []
+    FakeWildberriesProvider.PRICE = 3499.0
     yield
     FakeWildberriesProvider.EXTRA_REVIEWS = []
+    FakeWildberriesProvider.PRICE = 3499.0
 
 
 @pytest.fixture()
@@ -120,6 +129,7 @@ def client(monkeypatch):
     fake = lambda mp: FakeWildberriesProvider()  # noqa: E731
     monkeypatch.setattr(svc, "get_provider", fake)
     monkeypatch.setattr(comp_svc, "get_provider", fake)
+    monkeypatch.setattr(price_svc, "get_provider", fake)
 
     with TestClient(app) as c:
         yield c
@@ -135,5 +145,6 @@ def db(monkeypatch):
     fake = lambda mp: FakeWildberriesProvider()  # noqa: E731
     monkeypatch.setattr(svc, "get_provider", fake)
     monkeypatch.setattr(comp_svc, "get_provider", fake)
+    monkeypatch.setattr(price_svc, "get_provider", fake)
     yield Session
     asyncio.get_event_loop().run_until_complete(engine.dispose())

@@ -10,6 +10,7 @@ import { AddProduct } from "@/views/AddProduct";
 import { Competitors } from "@/views/Competitors";
 import { ConfirmProduct } from "@/views/ConfirmProduct";
 import { EditProduct } from "@/views/EditProduct";
+import { PriceHistory } from "@/views/PriceHistory";
 import { ProductDetail } from "@/views/ProductDetail";
 import { ProductsList } from "@/views/ProductsList";
 import { Settings } from "@/views/Settings";
@@ -27,6 +28,7 @@ type View =
   | { name: "detail"; productId: number }
   | { name: "edit"; product: Product }
   | { name: "competitors"; productId: number; productName: string }
+  | { name: "priceHistory"; productId: number; productName: string }
   | { name: "settings" };
 
 type AuthState =
@@ -164,6 +166,13 @@ export default function App() {
               productName: product.name,
             })
           }
+          onPriceHistory={(product) =>
+            push({
+              name: "priceHistory",
+              productId: product.id,
+              productName: product.name,
+            })
+          }
           onDeleted={() => {
             setReloadKey((k) => k + 1);
             resetTo({ name: "list" });
@@ -173,6 +182,13 @@ export default function App() {
 
       {current.name === "competitors" && (
         <Competitors
+          productId={current.productId}
+          productName={current.productName}
+        />
+      )}
+
+      {current.name === "priceHistory" && (
+        <PriceHistory
           productId={current.productId}
           productName={current.productName}
         />

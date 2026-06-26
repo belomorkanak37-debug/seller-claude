@@ -131,6 +131,27 @@ export interface Competitor {
   updated_at: string;
 }
 
+export interface PricePoint {
+  captured_at: string;
+  price: number;
+}
+
+export interface PriceSeries {
+  label: string;
+  competitor_id?: number | null;
+  points: PricePoint[];
+}
+
+export interface PriceHistory {
+  product: PriceSeries;
+  competitors: PriceSeries[];
+}
+
+export interface SnapshotResult {
+  product: number;
+  competitors: number;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -282,6 +303,17 @@ export function refreshProductReviews(
   productId: number
 ): Promise<ReviewRefreshResult> {
   return request<ReviewRefreshResult>(`/products/${productId}/reviews/refresh`, {
+    method: "POST",
+  });
+}
+
+// ── История цен ─────────────────────────────────────────────
+export function getPriceHistory(productId: number): Promise<PriceHistory> {
+  return request<PriceHistory>(`/products/${productId}/price-history`);
+}
+
+export function takePriceSnapshot(productId: number): Promise<SnapshotResult> {
+  return request<SnapshotResult>(`/products/${productId}/price-snapshot`, {
     method: "POST",
   });
 }
