@@ -2,6 +2,7 @@
 
 from app.db.models.competitor import Competitor
 from app.db.models.notification import Notification
+from app.db.models.position_snapshot import PositionSnapshot
 from app.db.models.price_snapshot import PriceSnapshot
 from app.db.models.product import Product
 from app.db.models.review import Review
@@ -14,6 +15,7 @@ __all__ = [
     "Competitor",
     "Review",
     "PriceSnapshot",
+    "PositionSnapshot",
     "Notification",
     "UnitEconomics",
 ]

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
     auth,
+    cards,
     competitors,
     health,
     price_history,
@@ -35,6 +36,7 @@ app.include_router(price_history.router)
 app.include_router(unit_economics.router)
 app.include_router(warehouse.router)
 app.include_router(pricing.router)
+app.include_router(cards.router)
 
 
 @app.get("/")

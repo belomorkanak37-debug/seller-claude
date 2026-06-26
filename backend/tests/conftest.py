@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import app.services.competitors as comp_svc
+import app.services.positions as positions_svc
 import app.services.price_history as price_svc
 import app.services.products as svc
 from app.api.deps import get_current_user
@@ -136,6 +137,7 @@ def client(monkeypatch):
     monkeypatch.setattr(svc, "get_provider", fake)
     monkeypatch.setattr(comp_svc, "get_provider", fake)
     monkeypatch.setattr(price_svc, "get_provider", fake)
+    monkeypatch.setattr(positions_svc, "get_provider", fake)
 
     with TestClient(app) as c:
         yield c
@@ -152,5 +154,6 @@ def db(monkeypatch):
     monkeypatch.setattr(svc, "get_provider", fake)
     monkeypatch.setattr(comp_svc, "get_provider", fake)
     monkeypatch.setattr(price_svc, "get_provider", fake)
+    monkeypatch.setattr(positions_svc, "get_provider", fake)
     yield Session
     asyncio.get_event_loop().run_until_complete(engine.dispose())

@@ -37,6 +37,9 @@ class Product(Base, TimestampMixin):
     # Внутренний id товара на площадке (WB imtId/root) — для отзывов/обновлений
     root_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
+    # Поисковые запросы для трекинга позиций (Этап 9)
+    tracked_queries: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
     # Параметры склада/поставок (Этап 7)
     daily_sales: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     lead_time_days: Mapped[int] = mapped_column(

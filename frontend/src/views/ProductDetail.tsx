@@ -4,6 +4,7 @@ import {
   LineChart,
   Pencil,
   RefreshCw,
+  Sparkles,
   Tag,
   Trash2,
   Users,
@@ -42,6 +43,7 @@ export function ProductDetail({
   onEconomics,
   onWarehouse,
   onPricing,
+  onCardInsights,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
@@ -51,6 +53,7 @@ export function ProductDetail({
   onEconomics: (product: Product) => void;
   onWarehouse: (product: Product) => void;
   onPricing: (product: Product) => void;
+  onCardInsights: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -217,9 +220,14 @@ export function ProductDetail({
         </Button>
       </div>
 
-      <Button variant="secondary" onClick={() => onPricing(product)}>
-        <Tag className="h-4 w-4" /> Ценообразование
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="secondary" onClick={() => onPricing(product)}>
+          <Tag className="h-4 w-4" /> Цены
+        </Button>
+        <Button variant="secondary" onClick={() => onCardInsights(product)}>
+          <Sparkles className="h-4 w-4" /> Карточка/SEO
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

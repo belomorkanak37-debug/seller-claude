@@ -48,4 +48,9 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.check_stock",
         "schedule": crontab(hour=6, minute=0),
     },
+    # Трекинг позиций в поиске — раз в сутки.
+    "track-positions": {
+        "task": "app.workers.tasks.track_positions",
+        "schedule": crontab(hour=4, minute=30),
+    },
 }

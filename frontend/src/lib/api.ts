@@ -221,6 +221,30 @@ export interface PromoResult {
   profit_delta: number;
 }
 
+export interface PositionItem {
+  query: string;
+  position?: number | null;
+}
+
+export interface CardComparison {
+  product: {
+    has_photo: boolean;
+    rating: number;
+    reviews_count: number;
+    tags_count: number;
+    price?: number | null;
+    name_length: number;
+  };
+  competitors_avg: Record<string, number>;
+  recommendations: string[];
+}
+
+export interface SeoResult {
+  suggested_keywords: string[];
+  score: number;
+  tips: string[];
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -440,4 +464,25 @@ export function promoCalc(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+// ── Карточка, позиции, SEO ──────────────────────────────────
+export function getPositions(
+  productId: number
+): Promise<{ queries: string[]; latest: PositionItem[] }> {
+  return request(`/products/${productId}/positions`);
+}
+
+export function checkPositions(productId: number): Promise<PositionItem[]> {
+  return request<PositionItem[]>(`/products/${productId}/positions/check`, {
+    method: "POST",
+  });
+}
+
+export function getCardComparison(productId: number): Promise<CardComparison> {
+  return request<CardComparison>(`/products/${productId}/card-comparison`);
+}
+
+export function getSeo(productId: number): Promise<SeoResult> {
+  return request<SeoResult>(`/products/${productId}/seo`);
 }

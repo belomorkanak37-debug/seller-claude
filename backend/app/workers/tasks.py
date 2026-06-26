@@ -12,6 +12,7 @@ from app.db.session import async_session_maker
 from app.providers.base import ProviderError
 from app.providers.registry import get_provider
 from app.services import notifications as notify_svc
+from app.services import positions as positions_svc
 from app.services import price_history as price_svc
 from app.services import products as products_svc
 from app.services import warehouse as warehouse_svc
@@ -141,6 +142,25 @@ async def _check_stock() -> dict:
                     oos_alerts += 1
             await session.commit()
     return {"status": "ok", "low_stock": low_alerts, "competitor_oos": oos_alerts}
+
+
+@celery_app.task(name="app.workers.tasks.track_positions")
+def track_positions() -> dict:
+    """Ежедневный снимок позиций товаров в поиске."""
+    return _run(_track_positions())
+
+
+async def _track_positions() -> dict:
+    checked = 0
+    async with async_session_maker() as session:
+        products = (await session.execute(select(Product))).scalars().all()
+        for product in products:
+            try:
+                await positions_svc.check_positions(session, product, store=True)
+                checked += 1
+            except Exception as exc:  # noqa: BLE001
+                logger.info("track_positions %s: %s", product.id, exc)
+    return {"status": "ok", "checked": checked}
 
 
 @celery_app.task(name="app.workers.tasks.snapshot_all_prices")
