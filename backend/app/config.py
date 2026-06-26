@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     playwright_headless: bool = True
     playwright_nav_timeout_ms: int = 45000
 
+    # ── AI (Этап 10) ──────────────────────────────────────────
+    # Провайдер LLM: claude | none. Слой абстрактный, дефолт — Claude.
+    llm_provider: str = "claude"
+    anthropic_api_key: str = ""
+    llm_model: str = "claude-opus-4-8"
+    llm_max_tokens: int = 2048
+
     @property
     def cors_origins_list(self) -> list[str]:
         if not self.cors_origins:

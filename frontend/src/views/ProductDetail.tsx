@@ -8,6 +8,7 @@ import {
   Tag,
   Trash2,
   Users,
+  Wand2,
   Warehouse as WarehouseIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -44,6 +45,7 @@ export function ProductDetail({
   onWarehouse,
   onPricing,
   onCardInsights,
+  onAiInsights,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
@@ -54,6 +56,7 @@ export function ProductDetail({
   onWarehouse: (product: Product) => void;
   onPricing: (product: Product) => void;
   onCardInsights: (product: Product) => void;
+  onAiInsights: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -228,6 +231,10 @@ export function ProductDetail({
           <Sparkles className="h-4 w-4" /> Карточка/SEO
         </Button>
       </div>
+
+      <Button variant="secondary" onClick={() => onAiInsights(product)}>
+        <Wand2 className="h-4 w-4" /> AI по отзывам
+      </Button>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

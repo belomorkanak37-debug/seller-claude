@@ -245,6 +245,18 @@ export interface SeoResult {
   tips: string[];
 }
 
+export interface ReviewAnalysis {
+  sentiment: { positive: number; neutral: number; negative: number };
+  common_complaints: string[];
+  suggestions: string[];
+}
+
+export interface CompetitorAnalysis {
+  praise: string[];
+  criticism: string[];
+  differentiation: string[];
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -485,4 +497,26 @@ export function getCardComparison(productId: number): Promise<CardComparison> {
 
 export function getSeo(productId: number): Promise<SeoResult> {
   return request<SeoResult>(`/products/${productId}/seo`);
+}
+
+// ── AI по отзывам ───────────────────────────────────────────
+export function generateReply(reviewId: number): Promise<{ reply: string }> {
+  return request<{ reply: string }>(`/reviews/${reviewId}/reply`, {
+    method: "POST",
+  });
+}
+
+export function analyzeReviews(productId: number): Promise<ReviewAnalysis> {
+  return request<ReviewAnalysis>(`/products/${productId}/reviews/analyze`, {
+    method: "POST",
+  });
+}
+
+export function analyzeCompetitorsAi(
+  productId: number
+): Promise<CompetitorAnalysis> {
+  return request<CompetitorAnalysis>(
+    `/products/${productId}/competitors/analyze`,
+    { method: "POST" }
+  );
 }
