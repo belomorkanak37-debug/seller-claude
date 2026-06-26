@@ -61,6 +61,10 @@ class ProductDTO:
     tags: list[str] = field(default_factory=list)
     stock: int | None = None
     url: str | None = None
+    # Внутренний идентификатор товара на площадке (для WB — imtId/root),
+    # нужен, чтобы тянуть отзывы. Скрытая деталь реализации провайдера.
+    root_id: str | None = None
+    brand: str | None = None
 
 
 @dataclass
