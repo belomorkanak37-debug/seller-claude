@@ -16,12 +16,14 @@ export interface User {
   photo_url?: string | null;
   notifications_enabled: boolean;
   notify_new_reviews: boolean;
+  notify_stock: boolean;
   registered_at: string;
 }
 
 export interface UserSettingsUpdate {
   notifications_enabled?: boolean;
   notify_new_reviews?: boolean;
+  notify_stock?: boolean;
 }
 
 export interface NotificationItem {
@@ -170,6 +172,22 @@ export interface EconomicsResult {
   net_profit: number;
   margin_pct?: number | null;
   is_profitable: boolean;
+}
+
+export interface WarehouseParams {
+  daily_sales: number;
+  lead_time_days: number;
+  target_cover_days: number;
+  low_stock_threshold_days: number;
+}
+
+export interface WarehouseForecast {
+  stock: number;
+  daily_sales: number;
+  days_left?: number | null;
+  recommended_supply: number;
+  status: "out" | "critical" | "low" | "ok" | "unknown";
+  params: WarehouseParams;
 }
 
 export class ApiError extends Error {
@@ -348,6 +366,21 @@ export function saveUnitEconomics(
   params: EconomicsParams
 ): Promise<EconomicsResult> {
   return request<EconomicsResult>(`/products/${productId}/unit-economics`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
+}
+
+// ── Склад и поставки ────────────────────────────────────────
+export function getWarehouse(productId: number): Promise<WarehouseForecast> {
+  return request<WarehouseForecast>(`/products/${productId}/warehouse`);
+}
+
+export function saveWarehouse(
+  productId: number,
+  params: WarehouseParams
+): Promise<WarehouseForecast> {
+  return request<WarehouseForecast>(`/products/${productId}/warehouse`, {
     method: "PUT",
     body: JSON.stringify(params),
   });

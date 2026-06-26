@@ -27,6 +27,9 @@ class User(Base, TimestampMixin):
     notify_new_reviews: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False
     )
+    notify_stock: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
 
     registered_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), nullable=False

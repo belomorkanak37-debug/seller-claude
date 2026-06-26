@@ -39,7 +39,10 @@ export function Settings() {
     };
   }, []);
 
-  async function patch(field: "notifications_enabled" | "notify_new_reviews", value: boolean) {
+  async function patch(
+    field: "notifications_enabled" | "notify_new_reviews" | "notify_stock",
+    value: boolean
+  ) {
     if (!user) return;
     haptic("light");
     setSaving(true);
@@ -85,6 +88,13 @@ export function Settings() {
           checked={user.notify_new_reviews && master}
           disabled={saving || !master}
           onChange={(v) => patch("notify_new_reviews", v)}
+        />
+        <Row
+          title="Склад и конкуренты"
+          subtitle="Низкий остаток и out-of-stock конкурентов"
+          checked={user.notify_stock && master}
+          disabled={saving || !master}
+          onChange={(v) => patch("notify_stock", v)}
         />
       </Card>
 

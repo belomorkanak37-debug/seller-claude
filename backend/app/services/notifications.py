@@ -13,7 +13,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.models import Notification, Product, Review, User
+from app.db.models import Competitor, Notification, Product, Review, User
 
 logger = logging.getLogger(__name__)
 
@@ -96,5 +96,56 @@ async def notify_new_reviews(
             type_="new_review",
             title=f"Новые отзывы: {product.name}"[:512],
             body=text,
+        )
+    return sent
+
+
+async def notify_low_stock(
+    session: AsyncSession, user: User, product: Product, forecast
+) -> bool:
+    """Алерт о низком/нулевом остатке с рекомендацией по отгрузке."""
+    if not user.notifications_enabled or not user.notify_stock:
+        return False
+    if forecast.status not in ("low", "critical", "out"):
+        return False
+
+    if forecast.status == "out":
+        head = f"⛔️ Товар <b>{product.name}</b> закончился на складе"
+    else:
+        days = forecast.days_left
+        head = (
+            f"📦 Низкий остаток по <b>{product.name}</b>: "
+            f"{forecast.stock} шт (хватит на ~{days} дн.)"
+        )
+    body = head
+    if forecast.recommended_supply > 0:
+        body += f"\nРекомендуем отгрузить: {forecast.recommended_supply} шт"
+
+    sent = await send_telegram_message(user.telegram_id, body)
+    if sent:
+        await log_notification(
+            session, user.id, "low_stock", f"Остаток: {product.name}"[:512], body
+        )
+    return sent
+
+
+async def notify_competitor_oos(
+    session: AsyncSession, user: User, product: Product, competitor: Competitor
+) -> bool:
+    """Триггер: конкурент ушёл в out-of-stock — можно поднять цену."""
+    if not user.notifications_enabled or not user.notify_stock:
+        return False
+    body = (
+        f"📈 Конкурент <b>{competitor.name}</b> закончился (out-of-stock).\n"
+        f"По товару <b>{product.name}</b> можно поднять цену."
+    )
+    sent = await send_telegram_message(user.telegram_id, body)
+    if sent:
+        await log_notification(
+            session,
+            user.id,
+            "competitor_oos",
+            f"Конкурент OOS: {product.name}"[:512],
+            body,
         )
     return sent

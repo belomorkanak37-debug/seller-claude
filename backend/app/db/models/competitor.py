@@ -31,6 +31,8 @@ class Competitor(Base, TimestampMixin):
     rating: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
     reviews_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Последний известный остаток (для триггера out-of-stock)
+    stock: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # Заметка продавца (вместо «добавить отзыв»)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)

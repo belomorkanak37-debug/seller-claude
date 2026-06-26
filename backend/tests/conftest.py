@@ -63,9 +63,13 @@ class FakeWildberriesProvider:
 
     # Текущая цена (для снапшотов истории цен)
     PRICE: float = 3499.0
+    STOCK: int = 10
 
     async def get_price(self, product_id: str):
         return FakeWildberriesProvider.PRICE
+
+    async def get_stock(self, product_id: str):
+        return FakeWildberriesProvider.STOCK
 
     async def search_competitors(self, keywords, limit: int = 10):
         return [
@@ -107,9 +111,11 @@ def _make_env():
 def _reset_fake():
     FakeWildberriesProvider.EXTRA_REVIEWS = []
     FakeWildberriesProvider.PRICE = 3499.0
+    FakeWildberriesProvider.STOCK = 10
     yield
     FakeWildberriesProvider.EXTRA_REVIEWS = []
     FakeWildberriesProvider.PRICE = 3499.0
+    FakeWildberriesProvider.STOCK = 10
 
 
 @pytest.fixture()

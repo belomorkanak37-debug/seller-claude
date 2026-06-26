@@ -7,12 +7,14 @@ import logging
 
 from sqlalchemy import select
 
-from app.db.models import Product, User
+from app.db.models import Competitor, Product, User
 from app.db.session import async_session_maker
 from app.providers.base import ProviderError
+from app.providers.registry import get_provider
 from app.services import notifications as notify_svc
 from app.services import price_history as price_svc
 from app.services import products as products_svc
+from app.services import warehouse as warehouse_svc
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -87,6 +89,58 @@ async def _check_new_reviews() -> dict:
         "new_reviews": total_new,
         "notified": notified,
     }
+
+
+@celery_app.task(name="app.workers.tasks.check_stock")
+def check_stock() -> dict:
+    """Алерты о низком остатке и триггер «конкурент ушёл в out-of-stock»."""
+    return _run(_check_stock())
+
+
+async def _check_stock() -> dict:
+    low_alerts = 0
+    oos_alerts = 0
+    async with async_session_maker() as session:
+        products = (await session.execute(select(Product))).scalars().all()
+        for product in products:
+            user = await session.get(User, product.user_id)
+            if user is None:
+                continue
+
+            # 1) Низкий остаток
+            forecast = warehouse_svc.forecast_for_product(product)
+            if forecast.status in ("low", "critical", "out"):
+                if await notify_svc.notify_low_stock(
+                    session, user, product, forecast
+                ):
+                    low_alerts += 1
+
+            # 2) Конкуренты ушли в out-of-stock (по переходу >0 -> 0)
+            competitors = (
+                await session.execute(
+                    select(Competitor).where(Competitor.product_id == product.id)
+                )
+            ).scalars().all()
+            for c in competitors:
+                if not c.article:
+                    continue
+                try:
+                    provider = get_provider(c.marketplace)
+                    current = await provider.get_stock(c.article)
+                except ProviderError as exc:
+                    logger.info("stock check competitor %s: %s", c.id, exc)
+                    continue
+                if current is None:
+                    continue
+                prev = c.stock
+                went_oos = current == 0 and (prev is None or prev > 0)
+                c.stock = current
+                if went_oos and await notify_svc.notify_competitor_oos(
+                    session, user, product, c
+                ):
+                    oos_alerts += 1
+            await session.commit()
+    return {"status": "ok", "low_stock": low_alerts, "competitor_oos": oos_alerts}
 
 
 @celery_app.task(name="app.workers.tasks.snapshot_all_prices")

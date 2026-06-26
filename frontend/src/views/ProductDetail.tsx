@@ -6,6 +6,7 @@ import {
   RefreshCw,
   Trash2,
   Users,
+  Warehouse as WarehouseIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -38,6 +39,7 @@ export function ProductDetail({
   onCompetitors,
   onPriceHistory,
   onEconomics,
+  onWarehouse,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
@@ -45,6 +47,7 @@ export function ProductDetail({
   onCompetitors: (product: Product) => void;
   onPriceHistory: (product: Product) => void;
   onEconomics: (product: Product) => void;
+  onWarehouse: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -202,9 +205,14 @@ export function ProductDetail({
         </Button>
       </div>
 
-      <Button variant="secondary" onClick={() => onEconomics(product)}>
-        <Calculator className="h-4 w-4" /> Юнит-экономика
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="secondary" onClick={() => onEconomics(product)}>
+          <Calculator className="h-4 w-4" /> Экономика
+        </Button>
+        <Button variant="secondary" onClick={() => onWarehouse(product)}>
+          <WarehouseIcon className="h-4 w-4" /> Склад
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

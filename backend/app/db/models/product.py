@@ -37,6 +37,18 @@ class Product(Base, TimestampMixin):
     # Внутренний id товара на площадке (WB imtId/root) — для отзывов/обновлений
     root_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
+    # Параметры склада/поставок (Этап 7)
+    daily_sales: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    lead_time_days: Mapped[int] = mapped_column(
+        Integer, default=14, server_default="14", nullable=False
+    )
+    target_cover_days: Mapped[int] = mapped_column(
+        Integer, default=30, server_default="30", nullable=False
+    )
+    low_stock_threshold_days: Mapped[int] = mapped_column(
+        Integer, default=7, server_default="7", nullable=False
+    )
+
     # Параметры для юнит-экономики (заполняются продавцом)
     cost_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

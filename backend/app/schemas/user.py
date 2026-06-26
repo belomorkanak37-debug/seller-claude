@@ -21,6 +21,7 @@ class UserOut(BaseModel):
     photo_url: str | None = None
     notifications_enabled: bool
     notify_new_reviews: bool
+    notify_stock: bool
     registered_at: datetime
 
 
@@ -32,6 +33,7 @@ class AuthResponse(BaseModel):
 class UserSettingsUpdate(BaseModel):
     notifications_enabled: bool | None = None
     notify_new_reviews: bool | None = None
+    notify_stock: bool | None = None
 
 
 class NotificationOut(BaseModel):

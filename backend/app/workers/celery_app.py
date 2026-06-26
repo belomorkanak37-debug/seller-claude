@@ -43,4 +43,9 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.check_new_reviews",
         "schedule": crontab(minute="*/30"),
     },
+    # Проверка остатков и out-of-stock конкурентов — раз в сутки.
+    "check-stock": {
+        "task": "app.workers.tasks.check_stock",
+        "schedule": crontab(hour=6, minute=0),
+    },
 }

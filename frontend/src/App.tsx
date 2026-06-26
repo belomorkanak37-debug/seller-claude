@@ -15,6 +15,7 @@ import { ProductDetail } from "@/views/ProductDetail";
 import { ProductsList } from "@/views/ProductsList";
 import { Settings } from "@/views/Settings";
 import { UnitEconomics } from "@/views/UnitEconomics";
+import { Warehouse } from "@/views/Warehouse";
 
 type View =
   | { name: "list" }
@@ -31,6 +32,7 @@ type View =
   | { name: "competitors"; productId: number; productName: string }
   | { name: "priceHistory"; productId: number; productName: string }
   | { name: "economics"; productId: number; productName: string }
+  | { name: "warehouse"; productId: number; productName: string }
   | { name: "settings" };
 
 type AuthState =
@@ -182,6 +184,13 @@ export default function App() {
               productName: product.name,
             })
           }
+          onWarehouse={(product) =>
+            push({
+              name: "warehouse",
+              productId: product.id,
+              productName: product.name,
+            })
+          }
           onDeleted={() => {
             setReloadKey((k) => k + 1);
             resetTo({ name: "list" });
@@ -205,6 +214,13 @@ export default function App() {
 
       {current.name === "economics" && (
         <UnitEconomics
+          productId={current.productId}
+          productName={current.productName}
+        />
+      )}
+
+      {current.name === "warehouse" && (
+        <Warehouse
           productId={current.productId}
           productName={current.productName}
         />
