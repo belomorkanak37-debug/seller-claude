@@ -49,6 +49,16 @@ class Product(Base, TimestampMixin):
         Integer, default=7, server_default="7", nullable=False
     )
 
+    # Правило авто-репрайсера (Этап 8)
+    repricer_enabled: Mapped[bool] = mapped_column(
+        default=False, server_default="false", nullable=False
+    )
+    # На сколько % быть ниже минимальной цены конкурента
+    undercut_pct: Mapped[float | None] = mapped_column(Numeric(6, 3), nullable=True)
+    # Нижняя/верхняя граница цены (не демпингуем ниже min)
+    min_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    max_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+
     # Параметры для юнит-экономики (заполняются продавцом)
     cost_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

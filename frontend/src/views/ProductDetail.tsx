@@ -4,6 +4,7 @@ import {
   LineChart,
   Pencil,
   RefreshCw,
+  Tag,
   Trash2,
   Users,
   Warehouse as WarehouseIcon,
@@ -40,6 +41,7 @@ export function ProductDetail({
   onPriceHistory,
   onEconomics,
   onWarehouse,
+  onPricing,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
@@ -48,6 +50,7 @@ export function ProductDetail({
   onPriceHistory: (product: Product) => void;
   onEconomics: (product: Product) => void;
   onWarehouse: (product: Product) => void;
+  onPricing: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -213,6 +216,10 @@ export function ProductDetail({
           <WarehouseIcon className="h-4 w-4" /> Склад
         </Button>
       </div>
+
+      <Button variant="secondary" onClick={() => onPricing(product)}>
+        <Tag className="h-4 w-4" /> Ценообразование
+      </Button>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

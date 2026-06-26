@@ -6,6 +6,7 @@ from app.api.routes import (
     competitors,
     health,
     price_history,
+    pricing,
     products,
     unit_economics,
     users,
@@ -33,6 +34,7 @@ app.include_router(users.router)
 app.include_router(price_history.router)
 app.include_router(unit_economics.router)
 app.include_router(warehouse.router)
+app.include_router(pricing.router)
 
 
 @app.get("/")

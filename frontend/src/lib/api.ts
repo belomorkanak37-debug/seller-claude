@@ -190,6 +190,37 @@ export interface WarehouseForecast {
   params: WarehouseParams;
 }
 
+export interface RepriceRule {
+  enabled: boolean;
+  undercut_pct: number;
+  min_price?: number | null;
+  max_price?: number | null;
+}
+
+export interface RepriceResult {
+  rule: RepriceRule;
+  current_price?: number | null;
+  lowest_competitor?: number | null;
+  target_price?: number | null;
+  recommended_price?: number | null;
+  floor?: number | null;
+  floor_hit: boolean;
+  would_change: boolean;
+  direction: "down" | "up" | "none";
+  reason: string;
+  break_even_price?: number | null;
+}
+
+export interface PromoResult {
+  base_price: number;
+  promo_price: number;
+  discount_pct: number;
+  net_profit: number;
+  margin_pct?: number | null;
+  is_profitable: boolean;
+  profit_delta: number;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -383,5 +414,30 @@ export function saveWarehouse(
   return request<WarehouseForecast>(`/products/${productId}/warehouse`, {
     method: "PUT",
     body: JSON.stringify(params),
+  });
+}
+
+// ── Ценообразование ─────────────────────────────────────────
+export function getRepricer(productId: number): Promise<RepriceResult> {
+  return request<RepriceResult>(`/products/${productId}/repricer`);
+}
+
+export function saveRepricer(
+  productId: number,
+  rule: RepriceRule
+): Promise<RepriceResult> {
+  return request<RepriceResult>(`/products/${productId}/repricer`, {
+    method: "PUT",
+    body: JSON.stringify(rule),
+  });
+}
+
+export function promoCalc(
+  productId: number,
+  input: { discount_pct?: number; promo_price?: number }
+): Promise<PromoResult> {
+  return request<PromoResult>(`/products/${productId}/promo-calc`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
