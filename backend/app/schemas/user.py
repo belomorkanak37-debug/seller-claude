@@ -20,9 +20,25 @@ class UserOut(BaseModel):
     language_code: str | None = None
     photo_url: str | None = None
     notifications_enabled: bool
+    notify_new_reviews: bool
     registered_at: datetime
 
 
 class AuthResponse(BaseModel):
     user: UserOut
     is_new: bool
+
+
+class UserSettingsUpdate(BaseModel):
+    notifications_enabled: bool | None = None
+    notify_new_reviews: bool | None = None
+
+
+class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    type: str
+    title: str | None = None
+    body: str | None = None
+    sent_at: datetime

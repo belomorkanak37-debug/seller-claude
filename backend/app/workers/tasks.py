@@ -7,10 +7,12 @@ import logging
 
 from sqlalchemy import select
 
-from app.db.models import PriceSnapshot, Product
+from app.db.models import PriceSnapshot, Product, User
 from app.db.session import async_session_maker
 from app.providers.base import ProviderError
 from app.providers.registry import get_provider
+from app.services import notifications as notify_svc
+from app.services import products as products_svc
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,43 @@ async def _refresh_product(product_id: int) -> dict:
             product.tags = dto.tags
         await session.commit()
         return {"product_id": product_id, "status": "ok", "price": float(dto.price or 0)}
+
+
+@celery_app.task(name="app.workers.tasks.check_new_reviews")
+def check_new_reviews() -> dict:
+    """Периодически проверяет новые отзывы по товарам и шлёт уведомления."""
+    return _run(_check_new_reviews())
+
+
+async def _check_new_reviews() -> dict:
+    checked = 0
+    notified = 0
+    total_new = 0
+    async with async_session_maker() as session:
+        products = (await session.execute(select(Product))).scalars().all()
+        for product in products:
+            checked += 1
+            try:
+                new_count, new_reviews = await products_svc.sync_product_reviews(
+                    session, product
+                )
+            except ProviderError as exc:
+                logger.info("check_new_reviews %s: %s", product.id, exc)
+                continue
+            if new_count == 0:
+                continue
+            total_new += new_count
+            user = await session.get(User, product.user_id)
+            if user and await notify_svc.notify_new_reviews(
+                session, user, product, new_reviews
+            ):
+                notified += 1
+    return {
+        "status": "ok",
+        "checked": checked,
+        "new_reviews": total_new,
+        "notified": notified,
+    }
 
 
 @celery_app.task(name="app.workers.tasks.snapshot_all_prices")

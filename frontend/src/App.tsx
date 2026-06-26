@@ -12,6 +12,7 @@ import { ConfirmProduct } from "@/views/ConfirmProduct";
 import { EditProduct } from "@/views/EditProduct";
 import { ProductDetail } from "@/views/ProductDetail";
 import { ProductsList } from "@/views/ProductsList";
+import { Settings } from "@/views/Settings";
 
 type View =
   | { name: "list" }
@@ -25,7 +26,8 @@ type View =
     }
   | { name: "detail"; productId: number }
   | { name: "edit"; product: Product }
-  | { name: "competitors"; productId: number; productName: string };
+  | { name: "competitors"; productId: number; productName: string }
+  | { name: "settings" };
 
 type AuthState =
   | { status: "loading" }
@@ -124,6 +126,7 @@ export default function App() {
           reloadKey={reloadKey}
           onAdd={() => push({ name: "add" })}
           onOpen={(productId) => push({ name: "detail", productId })}
+          onSettings={() => push({ name: "settings" })}
         />
       )}
 
@@ -174,6 +177,8 @@ export default function App() {
           productName={current.productName}
         />
       )}
+
+      {current.name === "settings" && <Settings />}
 
       {current.name === "edit" && (
         <EditProduct

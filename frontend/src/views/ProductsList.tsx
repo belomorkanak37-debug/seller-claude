@@ -1,4 +1,4 @@
-import { Plus, PackageOpen } from "lucide-react";
+import { Plus, PackageOpen, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -15,10 +15,12 @@ export function ProductsList({
   reloadKey,
   onAdd,
   onOpen,
+  onSettings,
 }: {
   reloadKey: number;
   onAdd: () => void;
   onOpen: (productId: number) => void;
+  onSettings: () => void;
 }) {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,15 +55,27 @@ export function ProductsList({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Мои товары</h2>
-        <Button
-          size="sm"
-          onClick={() => {
-            haptic("light");
-            onAdd();
-          }}
-        >
-          <Plus className="h-4 w-4" /> Добавить
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              haptic("light");
+              onSettings();
+            }}
+          >
+            <SettingsIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              haptic("light");
+              onAdd();
+            }}
+          >
+            <Plus className="h-4 w-4" /> Добавить
+          </Button>
+        </div>
       </div>
 
       {products.length === 0 ? (

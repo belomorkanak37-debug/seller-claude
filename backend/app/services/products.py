@@ -67,6 +67,7 @@ async def create_product_from_marketplace(
         reviews_count=dto.reviews_count,
         tags=dto.tags or None,
         stock=dto.stock,
+        root_id=dto.root_id,
         cost_price=cost_price,
     )
     session.add(product)
@@ -101,6 +102,55 @@ async def _store_product_reviews(
                 published_at=d.published_at,
             )
         )
+
+
+async def sync_product_reviews(
+    session: AsyncSession, product: Product
+) -> tuple[int, list[Review]]:
+    """Инкрементально подтягивает новые отзывы товара.
+
+    Возвращает (кол-во новых, список новых Review). Дедуп по external_id.
+    Используется ручным обновлением и периодической задачей уведомлений.
+    """
+    # root_id нужен для отзывов; если не сохранён — берём из карточки
+    root_id = product.root_id
+    provider = get_provider(product.marketplace)
+    if not root_id:
+        dto = await provider.get_product(product.article)
+        root_id = dto.root_id
+        if root_id:
+            product.root_id = root_id
+    if not root_id:
+        return 0, []
+
+    live = await provider.get_reviews(root_id, limit=REVIEWS_LIMIT)
+
+    existing = await session.execute(
+        select(Review.external_id).where(Review.product_id == product.id)
+    )
+    known: set[str] = {e for (e,) in existing.all() if e}
+
+    new_reviews: list[Review] = []
+    for d in live:
+        if not d.external_id or d.external_id in known:
+            continue
+        review = Review(
+            product_id=product.id,
+            external_id=d.external_id,
+            source=d.source,
+            author=d.author,
+            text=d.text,
+            rating=d.rating,
+            published_at=d.published_at,
+        )
+        session.add(review)
+        new_reviews.append(review)
+        known.add(d.external_id)
+
+    await session.commit()
+    for r in new_reviews:
+        await session.refresh(r)
+    return len(new_reviews), new_reviews
 
 
 async def get_user_product(

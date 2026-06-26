@@ -20,8 +20,11 @@ class User(Base, TimestampMixin):
     language_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
-    # Настройки уведомлений (на Этапе 4 расширим конкретными флагами)
+    # Настройки уведомлений: мастер-выключатель + по типам
     notifications_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    notify_new_reviews: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False
     )
 

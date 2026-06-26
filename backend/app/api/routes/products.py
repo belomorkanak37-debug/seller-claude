@@ -125,6 +125,28 @@ async def get_product_reviews(
     return [ReviewOut.model_validate(r) for r in reviews]
 
 
+@router.post("/{product_id}/reviews/refresh")
+async def refresh_product_reviews(
+    product_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Подтягивает свежие отзывы по товару (инкрементально). Возвращает кол-во новых."""
+    product = await svc.get_user_product(session, user.id, product_id)
+    if product is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Товар не найден")
+    try:
+        new_count, _ = await svc.sync_product_reviews(session, product)
+    except ProviderError as exc:
+        raise _provider_http_error(exc) from exc
+    reviews = await svc.get_stored_reviews(session, product_id)
+    return {
+        "new": new_count,
+        "total": len(reviews),
+        "reviews": [ReviewOut.model_validate(r).model_dump(mode="json") for r in reviews],
+    }
+
+
 @router.patch("/{product_id}", response_model=ProductOut)
 async def update_product(
     product_id: int,

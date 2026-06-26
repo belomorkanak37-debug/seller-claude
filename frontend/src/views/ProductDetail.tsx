@@ -1,4 +1,4 @@
-import { ExternalLink, Pencil, Trash2, Users } from "lucide-react";
+import { ExternalLink, Pencil, RefreshCw, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -12,6 +12,7 @@ import {
   deleteProduct,
   getProduct,
   getProductReviews,
+  refreshProductReviews,
   type Product,
   type Review,
 } from "@/lib/api";
@@ -38,6 +39,8 @@ export function ProductDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [refreshingReviews, setRefreshingReviews] = useState(false);
+  const [reviewsMsg, setReviewsMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -86,6 +89,24 @@ export function ProductDetail({
       haptic("error");
       setError(e instanceof Error ? e.message : "Не удалось удалить");
       setDeleting(false);
+    }
+  }
+
+  async function onRefreshReviews() {
+    setRefreshingReviews(true);
+    setReviewsMsg(null);
+    try {
+      const res = await refreshProductReviews(productId);
+      setReviews(res.reviews);
+      haptic(res.new > 0 ? "success" : "light");
+      setReviewsMsg(
+        res.new > 0 ? `Новых отзывов: ${res.new}` : "Новых отзывов нет"
+      );
+    } catch (e) {
+      haptic("error");
+      setReviewsMsg(e instanceof Error ? e.message : "Не удалось обновить");
+    } finally {
+      setRefreshingReviews(false);
     }
   }
 
@@ -174,9 +195,29 @@ export function ProductDetail({
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">
-          Отзывы {reviews.length > 0 && `(${reviews.length})`}
-        </h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">
+            Отзывы {reviews.length > 0 && `(${reviews.length})`}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRefreshReviews}
+            disabled={refreshingReviews}
+          >
+            {refreshingReviews ? (
+              <Spinner />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Обновить
+          </Button>
+        </div>
+        {reviewsMsg && (
+          <p className="mb-2 text-xs text-[var(--tg-theme-hint-color)]">
+            {reviewsMsg}
+          </p>
+        )}
         <ReviewList reviews={reviews} />
       </div>
     </div>

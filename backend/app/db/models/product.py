@@ -34,6 +34,9 @@ class Product(Base, TimestampMixin):
     tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
     stock: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    # Внутренний id товара на площадке (WB imtId/root) — для отзывов/обновлений
+    root_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+
     # Параметры для юнит-экономики (заполняются продавцом)
     cost_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

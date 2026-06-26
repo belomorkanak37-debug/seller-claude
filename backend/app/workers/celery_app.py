@@ -31,10 +31,16 @@ celery_app.conf.update(
     task_soft_time_limit=240,
 )
 
-# Периодические задачи. Снимок цен — раз в сутки (используется на Этапе 5).
+# Периодические задачи.
 celery_app.conf.beat_schedule = {
+    # Снимок цен — раз в сутки (используется на Этапе 5).
     "daily-price-snapshots": {
         "task": "app.workers.tasks.snapshot_all_prices",
         "schedule": crontab(hour=3, minute=0),
+    },
+    # Проверка новых отзывов — каждые 30 минут.
+    "check-new-reviews": {
+        "task": "app.workers.tasks.check_new_reviews",
+        "schedule": crontab(minute="*/30"),
     },
 }

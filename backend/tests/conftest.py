@@ -1,5 +1,6 @@
-"""Фикстуры для интеграционных тестов API на in-memory SQLite + фейк-провайдер."""
+"""Фикстуры для тестов на in-memory SQLite + фейк-провайдер (без сети)."""
 
+import asyncio
 from datetime import datetime
 
 import pytest
@@ -22,10 +23,23 @@ from app.providers.base import (
 )
 
 
+def _review(external_id: str, author: str, text: str, rating: float) -> ReviewDTO:
+    return ReviewDTO(
+        external_id=external_id,
+        author=author,
+        text=text,
+        rating=rating,
+        published_at=datetime(2026, 1, 2),
+        source="wildberries",
+    )
+
+
 class FakeWildberriesProvider:
-    """Фейковый провайдер: отдаёт детерминированные данные без сети."""
+    """Фейковый провайдер: детерминированные данные без сети."""
 
     marketplace = Marketplace.WILDBERRIES
+    # Дополнительные отзывы, которые тест может «подбросить» как новые.
+    EXTRA_REVIEWS: list[ReviewDTO] = []
 
     async def get_product(self, article: str) -> ProductDTO:
         return ProductDTO(
@@ -43,19 +57,10 @@ class FakeWildberriesProvider:
         )
 
     async def get_reviews(self, product_id: str, limit: int = 50):
-        return [
-            ReviewDTO(
-                external_id="r1",
-                author="Анна",
-                text="отличный комод",
-                rating=5,
-                published_at=datetime(2026, 1, 2),
-                source="wildberries",
-            )
-        ]
+        base = [_review("r1", "Анна", "отличный комод", 5)]
+        return base + list(FakeWildberriesProvider.EXTRA_REVIEWS)
 
     async def search_competitors(self, keywords, limit: int = 10):
-        # один из результатов совпадает с собственным товаром (article=123)
         return [
             CompetitorDTO(
                 marketplace=Marketplace.WILDBERRIES,
@@ -76,12 +81,9 @@ class FakeWildberriesProvider:
         ]
 
 
-@pytest.fixture()
-def client(monkeypatch):
+def _make_env():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     Session = async_sessionmaker(engine, expire_on_commit=False)
-
-    import asyncio
 
     async def setup():
         async with engine.begin() as conn:
@@ -91,6 +93,19 @@ def client(monkeypatch):
             await s.commit()
 
     asyncio.get_event_loop().run_until_complete(setup())
+    return engine, Session
+
+
+@pytest.fixture(autouse=True)
+def _reset_fake():
+    FakeWildberriesProvider.EXTRA_REVIEWS = []
+    yield
+    FakeWildberriesProvider.EXTRA_REVIEWS = []
+
+
+@pytest.fixture()
+def client(monkeypatch):
+    engine, Session = _make_env()
 
     async def override_session():
         async with Session() as s:
@@ -110,4 +125,15 @@ def client(monkeypatch):
         yield c
 
     app.dependency_overrides.clear()
+    asyncio.get_event_loop().run_until_complete(engine.dispose())
+
+
+@pytest.fixture()
+def db(monkeypatch):
+    """Прямой доступ к сессии и id пользователя для сервис-тестов."""
+    engine, Session = _make_env()
+    fake = lambda mp: FakeWildberriesProvider()  # noqa: E731
+    monkeypatch.setattr(svc, "get_provider", fake)
+    monkeypatch.setattr(comp_svc, "get_provider", fake)
+    yield Session
     asyncio.get_event_loop().run_until_complete(engine.dispose())

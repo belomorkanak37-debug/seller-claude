@@ -15,7 +15,27 @@ export interface User {
   language_code?: string | null;
   photo_url?: string | null;
   notifications_enabled: boolean;
+  notify_new_reviews: boolean;
   registered_at: string;
+}
+
+export interface UserSettingsUpdate {
+  notifications_enabled?: boolean;
+  notify_new_reviews?: boolean;
+}
+
+export interface NotificationItem {
+  id: number;
+  type: string;
+  title?: string | null;
+  body?: string | null;
+  sent_at: string;
+}
+
+export interface ReviewRefreshResult {
+  new: number;
+  total: number;
+  reviews: Review[];
 }
 
 export interface AuthResponse {
@@ -240,4 +260,28 @@ export function updateCompetitor(
 
 export function deleteCompetitor(competitorId: number): Promise<void> {
   return request<void>(`/competitors/${competitorId}`, { method: "DELETE" });
+}
+
+// ── Профиль и уведомления ───────────────────────────────────
+export function getMe(): Promise<User> {
+  return request<User>("/me");
+}
+
+export function updateSettings(patch: UserSettingsUpdate): Promise<User> {
+  return request<User>("/me/settings", {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function listNotifications(): Promise<NotificationItem[]> {
+  return request<NotificationItem[]>("/notifications");
+}
+
+export function refreshProductReviews(
+  productId: number
+): Promise<ReviewRefreshResult> {
+  return request<ReviewRefreshResult>(`/products/${productId}/reviews/refresh`, {
+    method: "POST",
+  });
 }
