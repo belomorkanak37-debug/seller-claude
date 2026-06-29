@@ -257,6 +257,67 @@ export interface CompetitorAnalysis {
   differentiation: string[];
 }
 
+export interface AdStat {
+  id: number;
+  label: string;
+  spend: number;
+  revenue: number;
+  clicks?: number | null;
+  orders?: number | null;
+  created_at: string;
+}
+
+export interface AdMetrics {
+  spend: number;
+  revenue: number;
+  clicks: number;
+  orders: number;
+  drr?: number | null;
+  roi?: number | null;
+  cpo?: number | null;
+  cpc?: number | null;
+  recommendation: string;
+}
+
+export interface AdOverview {
+  stats: AdStat[];
+  total: AdMetrics;
+}
+
+export interface Payout {
+  id: number;
+  type: string;
+  amount: number;
+  product_id?: number | null;
+  note?: string | null;
+  occurred_at: string;
+}
+
+export interface PayoutsSummary {
+  payout: number;
+  fine: number;
+  withholding: number;
+  correction: number;
+  net: number;
+}
+
+export interface PayoutsOverview {
+  payouts: Payout[];
+  summary: PayoutsSummary;
+}
+
+export interface PnL {
+  units: number;
+  revenue: number;
+  cost_of_goods: number;
+  marketplace_costs: number;
+  ad_costs: number;
+  adjustments: number;
+  total_costs: number;
+  net_profit: number;
+  margin_pct?: number | null;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -519,4 +580,45 @@ export function analyzeCompetitorsAi(
     `/products/${productId}/competitors/analyze`,
     { method: "POST" }
   );
+}
+
+// ── Реклама и финансы ───────────────────────────────────────
+export function getAds(productId: number): Promise<AdOverview> {
+  return request<AdOverview>(`/products/${productId}/ads`);
+}
+
+export function addAdStat(
+  productId: number,
+  payload: {
+    label: string;
+    spend: number;
+    revenue: number;
+    clicks: number;
+    orders: number;
+  }
+): Promise<AdStat> {
+  return request<AdStat>(`/products/${productId}/ads`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getPayouts(): Promise<PayoutsOverview> {
+  return request<PayoutsOverview>("/payouts");
+}
+
+export function addPayout(payload: {
+  type: string;
+  amount: number;
+  product_id?: number | null;
+  note?: string | null;
+}): Promise<Payout> {
+  return request<Payout>("/payouts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getPnl(productId: number, units: number): Promise<PnL> {
+  return request<PnL>(`/products/${productId}/pnl?units=${units}`);
 }

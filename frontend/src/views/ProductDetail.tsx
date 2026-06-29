@@ -1,5 +1,6 @@
 import {
   Calculator,
+  CircleDollarSign,
   ExternalLink,
   LineChart,
   Pencil,
@@ -46,6 +47,7 @@ export function ProductDetail({
   onPricing,
   onCardInsights,
   onAiInsights,
+  onFinance,
 }: {
   productId: number;
   onEdit: (product: Product) => void;
@@ -57,6 +59,7 @@ export function ProductDetail({
   onPricing: (product: Product) => void;
   onCardInsights: (product: Product) => void;
   onAiInsights: (product: Product) => void;
+  onFinance: (product: Product) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -232,9 +235,14 @@ export function ProductDetail({
         </Button>
       </div>
 
-      <Button variant="secondary" onClick={() => onAiInsights(product)}>
-        <Wand2 className="h-4 w-4" /> AI по отзывам
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="secondary" onClick={() => onAiInsights(product)}>
+          <Wand2 className="h-4 w-4" /> AI по отзывам
+        </Button>
+        <Button variant="secondary" onClick={() => onFinance(product)}>
+          <CircleDollarSign className="h-4 w-4" /> Финансы
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" onClick={() => onEdit(product)}>

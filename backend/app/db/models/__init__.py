@@ -1,7 +1,9 @@
 """Импорт всех моделей, чтобы Alembic и SQLAlchemy видели их в metadata."""
 
+from app.db.models.ad_stat import AdStat
 from app.db.models.competitor import Competitor
 from app.db.models.notification import Notification
+from app.db.models.payout import Payout
 from app.db.models.position_snapshot import PositionSnapshot
 from app.db.models.price_snapshot import PriceSnapshot
 from app.db.models.product import Product
@@ -18,4 +20,6 @@ __all__ = [
     "PositionSnapshot",
     "Notification",
     "UnitEconomics",
+    "AdStat",
+    "Payout",
 ]

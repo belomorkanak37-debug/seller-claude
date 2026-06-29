@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
+    advertising,
     ai,
     auth,
     cards,
     competitors,
+    finance,
     health,
     price_history,
     pricing,
@@ -39,6 +41,8 @@ app.include_router(warehouse.router)
 app.include_router(pricing.router)
 app.include_router(cards.router)
 app.include_router(ai.router)
+app.include_router(advertising.router)
+app.include_router(finance.router)
 
 
 @app.get("/")
